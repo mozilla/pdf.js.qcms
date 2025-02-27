@@ -34,4 +34,3 @@ wasm-pack build \
           --out-dir ${OUTPUT}
 
 sed -i '1 i\/* THIS FILE IS GENERATED - DO NOT EDIT */' ${OUTPUT}/${OUTPUT_NAME}.js
-mv ${OUTPUT}/${OUTPUT_NAME}_bg.wasm ${OUTPUT}/${OUTPUT_NAME}.wasm
