@@ -29,4 +29,4 @@ node build.js -Cco my_output_dir
 
 ## Licensing
 
-The code is released under [MPL](https://www.mozilla.org/en-US/MPL/).
+The code is released under [MIT](https://mit-license.org/).
