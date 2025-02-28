@@ -64,7 +64,7 @@ fn to_intent(intent: Intent) -> qcms::Intent {
     }
 }
 
-#[wasm_bindgen(raw_module = "../../src/core/wasm_utils.js")]
+#[wasm_bindgen(raw_module = "./qcms_utils.js")]
 extern "C" {
     fn copy_result(ptr: *const u8, len: usize);
     fn copy_rgb(ptr: *const u8);

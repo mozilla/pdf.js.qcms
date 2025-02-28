@@ -33,4 +33,7 @@ wasm-pack build \
           --out-name ${OUTPUT_NAME} \
           --out-dir ${OUTPUT}
 
-sed -i '1 i\/* THIS FILE IS GENERATED - DO NOT EDIT */' ${OUTPUT}/${OUTPUT_NAME}.js
+sed -i "1 i\/* THIS FILE IS GENERATED - DO NOT EDIT */" ${OUTPUT}/${OUTPUT_NAME}.js
+sed -E -i "s/^.*((qcms_bg\.wasm)|(export\ default)).*$//g" ${OUTPUT}/${OUTPUT_NAME}.js
+ls -l ./js
+cp ./js/*.js ${OUTPUT}

@@ -7,6 +7,7 @@ RUN cargo install wasm-pack && \
 
 ADD Cargo.toml .
 ADD src ./src
+ADD js ./js
 
 RUN cargo update
 
