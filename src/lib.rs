@@ -85,7 +85,8 @@ impl Transformer {
         in_type: DataType,
         intent: Intent,
     ) -> Option<Self> {
-        let out_profile = Profile::new_sRGB();
+        let mut out_profile = Profile::new_sRGB();
+        out_profile.precache_output_transform();
         let in_profile = Profile::new_from_slice(in_profile, false)?;
         let transform = Transform::new_to(
             &in_profile,
