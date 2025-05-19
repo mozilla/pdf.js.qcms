@@ -68,6 +68,7 @@ fn to_intent(intent: Intent) -> qcms::Intent {
 extern "C" {
     fn copy_result(ptr: *const u8, len: usize);
     fn copy_rgb(ptr: *const u8);
+    fn make_cssRGB(ptr: *const u8);
 }
 
 pub struct Transformer {
@@ -132,21 +133,25 @@ pub unsafe fn qcms_convert_array(
 /// # Safety
 ///
 /// This function is called directly from JavaScript.
-pub unsafe fn qcms_convert_one(transformer: *mut Transformer, src: u8) {
+pub unsafe fn qcms_convert_one(transformer: *mut Transformer, src: u8, css: bool) {
     let transformer = &mut *transformer;
     transformer.src1[0] = src;
     let dest = &mut transformer.dest;
     transformer
         .transform
         .convert(&transformer.src1, dest);
-    copy_rgb(dest.as_ptr());
+    if css {
+        make_cssRGB(dest.as_ptr());
+    } else {
+        copy_rgb(dest.as_ptr());
+    }
 }
 
 #[wasm_bindgen]
 /// # Safety
 ///
 /// This function is called directly from JavaScript.
-pub unsafe fn qcms_convert_three(transformer: *mut Transformer, src1: u8, src2: u8, src3: u8) {
+pub unsafe fn qcms_convert_three(transformer: *mut Transformer, src1: u8, src2: u8, src3: u8, css: bool) {
     let transformer = &mut *transformer;
     transformer.src3[0] = src1;
     transformer.src3[1] = src2;
@@ -155,14 +160,18 @@ pub unsafe fn qcms_convert_three(transformer: *mut Transformer, src1: u8, src2: 
     transformer
         .transform
         .convert(&transformer.src3, dest);
-    copy_rgb(dest.as_ptr());
+    if css {
+        make_cssRGB(dest.as_ptr());
+    } else {
+        copy_rgb(dest.as_ptr());
+    }
 }
 
 #[wasm_bindgen]
 /// # Safety
 ///
 /// This function is called directly from JavaScript.
-pub unsafe fn qcms_convert_four(transformer: *mut Transformer, src1: u8, src2: u8, src3: u8, src4: u8) {
+pub unsafe fn qcms_convert_four(transformer: *mut Transformer, src1: u8, src2: u8, src3: u8, src4: u8, css: bool) {
     let transformer = &mut *transformer;
     transformer.src4[0] = src1;
     transformer.src4[1] = src2;
@@ -172,7 +181,11 @@ pub unsafe fn qcms_convert_four(transformer: *mut Transformer, src1: u8, src2: u
     transformer
         .transform
         .convert(&transformer.src4, dest);
-    copy_rgb(dest.as_ptr());
+    if css {
+        make_cssRGB(dest.as_ptr());
+    } else {
+        copy_rgb(dest.as_ptr());
+    }
 }
 
 #[wasm_bindgen]
