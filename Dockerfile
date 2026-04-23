@@ -11,7 +11,7 @@ ADD js ./js
 
 RUN cargo update
 
-ENV OUTPUT /js
-ENV INPUT /code
+ENV OUTPUT=/js
+ENV INPUT=/code
 
-CMD /code/compile.sh
+CMD ["/bin/sh", "-c", "/code/compile.sh"]

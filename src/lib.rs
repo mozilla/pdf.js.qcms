@@ -23,7 +23,7 @@
  */
 
 use qcms::{Profile, Transform};
-use std::{ptr::null_mut, vec};
+use std::ptr::null_mut;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -72,20 +72,12 @@ extern "C" {
 }
 
 pub struct Transformer {
-    src1: [u8; 1],
-    src3: [u8; 3],
-    src4: [u8; 4],
-    dest: [u8; 3],
     transform: Transform,
     in_type: DataType,
 }
 
 impl Transformer {
-    fn new(
-        in_profile: &[u8],
-        in_type: DataType,
-        intent: Intent,
-    ) -> Option<Self> {
+    fn new(in_profile: &[u8], in_type: DataType, intent: Intent) -> Option<Self> {
         let mut out_profile = Profile::new_sRGB();
         out_profile.precache_output_transform();
         let in_profile = Profile::new_from_slice(in_profile, false)?;
@@ -96,14 +88,17 @@ impl Transformer {
             qcms::DataType::RGB8,
             to_intent(intent),
         )?;
-        Some(Self {
-            src1: [0; 1],
-            src3: [0; 3],
-            src4: [0; 4],
-            dest: [0; 3],
-            transform,
-            in_type,
-        })
+        Some(Self { transform, in_type })
+    }
+}
+
+unsafe fn convert_and_copy(transform: &Transform, src: &[u8], css: bool) {
+    let mut dest = [0u8; 3];
+    transform.convert(src, &mut dest);
+    if css {
+        make_cssRGB(dest.as_ptr());
+    } else {
+        copy_rgb(dest.as_ptr());
     }
 }
 
@@ -111,10 +106,7 @@ impl Transformer {
 /// # Safety
 ///
 /// This function is called directly from JavaScript.
-pub unsafe fn qcms_convert_array(
-    transformer: *const Transformer,
-    src: Vec<u8>
-) {
+pub unsafe fn qcms_convert_array(transformer: *const Transformer, src: &[u8]) {
     let transformer = &*transformer;
     let len = src.len();
     let output_len = match transformer.in_type {
@@ -124,8 +116,8 @@ pub unsafe fn qcms_convert_array(
         DataType::GrayA8 => 3 * len / 2,
         DataType::CMYK => 3 * len / 4,
     };
-    let mut dest = vec![0; output_len];
-    transformer.transform.convert(&src, &mut dest);
+    let mut dest = vec![0u8; output_len];
+    transformer.transform.convert(src, &mut dest);
     copy_result(dest.as_ptr(), dest.len());
 }
 
@@ -133,66 +125,48 @@ pub unsafe fn qcms_convert_array(
 /// # Safety
 ///
 /// This function is called directly from JavaScript.
-pub unsafe fn qcms_convert_one(transformer: *mut Transformer, src: u8, css: bool) {
-    let transformer = &mut *transformer;
-    transformer.src1[0] = src;
-    let dest = &mut transformer.dest;
-    transformer
-        .transform
-        .convert(&transformer.src1, dest);
-    if css {
-        make_cssRGB(dest.as_ptr());
-    } else {
-        copy_rgb(dest.as_ptr());
-    }
+pub unsafe fn qcms_convert_one(transformer: *const Transformer, src: u8, css: bool) {
+    convert_and_copy(&(*transformer).transform, &[src], css);
 }
 
 #[wasm_bindgen]
 /// # Safety
 ///
 /// This function is called directly from JavaScript.
-pub unsafe fn qcms_convert_three(transformer: *mut Transformer, src1: u8, src2: u8, src3: u8, css: bool) {
-    let transformer = &mut *transformer;
-    transformer.src3[0] = src1;
-    transformer.src3[1] = src2;
-    transformer.src3[2] = src3;
-    let dest = &mut transformer.dest;
-    transformer
-        .transform
-        .convert(&transformer.src3, dest);
-    if css {
-        make_cssRGB(dest.as_ptr());
-    } else {
-        copy_rgb(dest.as_ptr());
-    }
+pub unsafe fn qcms_convert_three(
+    transformer: *const Transformer,
+    src1: u8,
+    src2: u8,
+    src3: u8,
+    css: bool,
+) {
+    convert_and_copy(&(*transformer).transform, &[src1, src2, src3], css);
 }
 
 #[wasm_bindgen]
 /// # Safety
 ///
 /// This function is called directly from JavaScript.
-pub unsafe fn qcms_convert_four(transformer: *mut Transformer, src1: u8, src2: u8, src3: u8, src4: u8, css: bool) {
-    let transformer = &mut *transformer;
-    transformer.src4[0] = src1;
-    transformer.src4[1] = src2;
-    transformer.src4[2] = src3;
-    transformer.src4[3] = src4;
-    let dest = &mut transformer.dest;
-    transformer
-        .transform
-        .convert(&transformer.src4, dest);
-    if css {
-        make_cssRGB(dest.as_ptr());
-    } else {
-        copy_rgb(dest.as_ptr());
-    }
+pub unsafe fn qcms_convert_four(
+    transformer: *const Transformer,
+    src1: u8,
+    src2: u8,
+    src3: u8,
+    src4: u8,
+    css: bool,
+) {
+    convert_and_copy(&(*transformer).transform, &[src1, src2, src3, src4], css);
 }
 
 #[wasm_bindgen]
 /// # Safety
 ///
 /// This function is called directly from JavaScript.
-pub unsafe fn qcms_transformer_from_memory(mem: &[u8], in_type: DataType, intent: Intent) -> *mut Transformer {
+pub unsafe fn qcms_transformer_from_memory(
+    mem: &[u8],
+    in_type: DataType,
+    intent: Intent,
+) -> *mut Transformer {
     Transformer::new(mem, in_type, intent)
         .map_or_else(null_mut, |t| Box::into_raw(Box::new(t)))
 }

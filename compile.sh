@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # MIT License
 #
 # Copyright (c) 2025 Mozilla Foundation
@@ -20,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-#!/bin/sh
+set -e
 
 OUTPUT=${OUTPUT:=.}
 OUTPUT_NAME=${OUTPUT_NAME:=qcms}
@@ -30,8 +32,8 @@ wasm-pack build \
           --release \
           --no-typescript \
           --no-pack \
-          --out-name ${OUTPUT_NAME} \
-          --out-dir ${OUTPUT}
+          --out-name "${OUTPUT_NAME}" \
+          --out-dir "${OUTPUT}"
 
-sed -i "1 i\/* THIS FILE IS GENERATED - DO NOT EDIT */" ${OUTPUT}/${OUTPUT_NAME}.js
-cp ./js/*.js ${OUTPUT}
+sed -i "1 i\/* THIS FILE IS GENERATED - DO NOT EDIT */" "${OUTPUT}/${OUTPUT_NAME}.js"
+cp ./js/*.js "${OUTPUT}"
