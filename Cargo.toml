@@ -2,6 +2,9 @@
 name = "qcms_pdf_js"
 version = "0.1.0"
 edition = "2021"
+# `slice::as_chunks`, which the conversion loops rely on to avoid `memcpy` calls
+# for three- and four-byte copies.
+rust-version = "1.88"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -13,6 +16,10 @@ qcms = "0.3"
 [profile.release]
 lto = true
 opt-level = 3
+# Worth 2.3K off the shipped wasm and measurably neutral on speed. `panic =
+# "abort"` is not set because wasm32-unknown-unknown already aborts: adding it
+# produces a byte-identical binary.
+codegen-units = 1
 
 [package.metadata.wasm-pack.profile.release.wasm-bindgen]
 omit-default-module-path = true
