@@ -12,6 +12,18 @@ node build.js --compile --output my_output_dir
 
 This builds the Docker image using Docker's layer cache, then writes `qcms.js`, `qcms_bg.wasm` and `qcms_utils.js` to `my_output_dir`. The image pins the Rust toolchain, `wasm-pack` and `wasm-bindgen-cli`, and the crates are built from `Cargo.lock`.
 
+### Build metadata
+
+`qcms_bg.wasm` contains a `build_info` custom section with a JSON object describing the build: the qcms version (`qcms`), the revision of this repository (`repo`, suffixed with `-dirty` if there were local changes), the Rust version (`rustc`), the wasm-bindgen version (`wasmBindgen`) and the wasm-pack version (`wasmPack`). It can be read with:
+
+```js
+const module = await WebAssembly.compile(bytes);
+const [section] = WebAssembly.Module.customSections(module, "build_info");
+const buildInfo = JSON.parse(new TextDecoder().decode(section));
+```
+
+The tests for the metadata can be run with `node --test test/build_metadata.test.js`.
+
 ## Update
 
 To update qcms, change its version in `Cargo.toml` if needed, then run:

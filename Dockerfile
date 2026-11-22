@@ -1,6 +1,11 @@
 FROM rust:1.100.0@sha256:223cc32ddca8f3ee90c436dbc94b6b5f052ea7f9653c5201e9612f08ad7d21b8
 WORKDIR /tmp
 
+# Node.js is used to add the build metadata to the wasm file.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
 # wasm-bindgen-cli must have the same version as wasm-bindgen in Cargo.lock.
 RUN cargo install --locked wasm-pack@0.15.1 && \
     cargo install --locked wasm-bindgen-cli@0.2.130 && \

@@ -24,8 +24,11 @@
 
 set -e
 
+INPUT=${INPUT:=.}
 OUTPUT=${OUTPUT:=.}
 OUTPUT_NAME=${OUTPUT_NAME:=qcms}
+RUSTC_VERSION=$(rustc -vV | sed -n 's/^release: //p')
+WASM_PACK_VERSION=$(wasm-pack --version | sed 's/^wasm-pack //')
 
 wasm-pack build \
           --target web \
@@ -36,5 +39,9 @@ wasm-pack build \
           --out-dir "${OUTPUT}" \
           -- --locked
 
+node "$(dirname "$0")/build_metadata.js" \
+     "${OUTPUT}/${OUTPUT_NAME}_bg.wasm" Cargo.lock "${INPUT}" \
+     "${RUSTC_VERSION}" "${WASM_PACK_VERSION}"
+
 sed -i "1 i\/* THIS FILE IS GENERATED - DO NOT EDIT */" "${OUTPUT}/${OUTPUT_NAME}.js"
-cp ./js/*.js "${OUTPUT}"
+cp ./js/qcms_utils.js "${OUTPUT}"
