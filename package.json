@@ -1,7 +1,9 @@
 {
+  "name": "pdf.js.qcms",
+  "version": "0.0.1",
   "private": true,
   "license": "MIT",
-  "dependencies": {
-    "argparse": "^2.0.1"
+  "devDependencies": {
+    "argparse": "^3.0.4"
   }
 }

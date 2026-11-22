@@ -37,6 +37,18 @@ When updating `wasm-bindgen` in `Cargo.lock`, `wasm-bindgen-cli` in `Dockerfile`
 
 Use `node build.js --create` to build only the Docker image.
 
+## Release
+
+Pushing a version tag (e.g. `v1.2.3`) runs the `Release` workflow: it builds the bindings and opens a pull request in [pdf.js](https://github.com/mozilla/pdf.js) updating `external/qcms/`, titled "Update qcms bindings to version 1.2.3":
+```sh
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+The workflow refuses to replace bindings in pdf.js that were built from a revision which isn't an ancestor of the tagged one, so that retrying an old tag can't revert a newer release.
+
+The workflow runs in the `release` environment, which must provide the `CLIENT_ID` and `APP_PRIVATE_KEY` secrets of a GitHub App installed on `mozilla/pdf.js` with read and write access to contents and pull requests.
+
 ## API
 
 `qcms_transformer_from_memory(profile, inType, intent)` returns a pointer, or 0
