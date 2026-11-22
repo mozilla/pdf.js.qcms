@@ -27,7 +27,8 @@
 const { ArgumentParser } = require("argparse");
 const fs = require("fs");
 const { spawn } = require("child_process");
-const { resolve } = require("path");
+const { tmpdir } = require("os");
+const { join, resolve } = require("path");
 
 function execAndPrint(fun, args) {
   const child = spawn(fun, args, { stdio: "inherit" });
@@ -43,11 +44,15 @@ function execAndPrint(fun, args) {
   });
 }
 
-function create() {
-  return execAndPrint("docker", ["build", "-t", "qcms", "."]);
+function create(imageIdFile) {
+  const args = ["build", "-t", "qcms"];
+  if (imageIdFile) {
+    args.push("--iidfile", imageIdFile);
+  }
+  return execAndPrint("docker", [...args, "."]);
 }
 
-function build(path) {
+function build(path, imageId) {
   const workingDir = resolve(".");
   return execAndPrint("docker", [
     "run",
@@ -57,26 +62,25 @@ function build(path) {
     "-v",
     `${workingDir}:/code`,
     "--rm",
-    "qcms",
+    imageId,
   ]);
-}
-
-async function hasImage() {
-  try {
-    await execAndPrint("docker", ["image", "inspect", "qcms"]);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 async function compile(path) {
   path = resolve(path);
   await fs.promises.access(path, fs.constants.F_OK);
-  if (!(await hasImage())) {
-    await create();
+  const tempDir = await fs.promises.mkdtemp(join(tmpdir(), "qcms-build-"));
+  try {
+    const imageIdFile = join(tempDir, "image-id");
+    // The image contains the sources, so always rebuild it, relying on
+    // Docker's layer cache.
+    await create(imageIdFile);
+    // Another checkout can retag the image before this container starts.
+    const imageId = (await fs.promises.readFile(imageIdFile, "utf8")).trim();
+    await build(path, imageId);
+  } finally {
+    await fs.promises.rm(tempDir, { recursive: true, force: true });
   }
-  await build(path);
 }
 
 const parser = new ArgumentParser({
@@ -88,7 +92,7 @@ parser.add_argument("-C", "--create", {
   action: "store_true",
 });
 parser.add_argument("-c", "--compile", {
-  help: "Compile the decoder and output a js file",
+  help: "Build the wasm file and its js bindings",
   action: "store_true",
 });
 parser.add_argument("-o", "--output", {
@@ -99,11 +103,10 @@ parser.add_argument("-o", "--output", {
 const args = parser.parse_args();
 
 async function main() {
-  if (args.create) {
-    await create();
-  }
   if (args.compile) {
     await compile(args.output);
+  } else if (args.create) {
+    await create();
   }
 }
 

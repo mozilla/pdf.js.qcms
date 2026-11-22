@@ -33,7 +33,8 @@ wasm-pack build \
           --no-typescript \
           --no-pack \
           --out-name "${OUTPUT_NAME}" \
-          --out-dir "${OUTPUT}"
+          --out-dir "${OUTPUT}" \
+          -- --locked
 
 sed -i "1 i\/* THIS FILE IS GENERATED - DO NOT EDIT */" "${OUTPUT}/${OUTPUT_NAME}.js"
 cp ./js/*.js "${OUTPUT}"
